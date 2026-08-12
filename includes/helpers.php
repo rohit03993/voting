@@ -196,3 +196,124 @@ function default_positions(): array
         'Class Captain (Class 5)',
     ];
 }
+
+function demo_first_names(): array
+{
+    return [
+        'Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan',
+        'Ananya', 'Aadhya', 'Diya', 'Myra', 'Anika', 'Pari', 'Sara', 'Aarohi', 'Anvi', 'Kiara',
+        'Rohan', 'Kabir', 'Yash', 'Dev', 'Om', 'Rudra', 'Shaurya', 'Atharv', 'Dhruv', 'Kartik',
+        'Priya', 'Neha', 'Sneha', 'Kavya', 'Isha', 'Riya', 'Nisha', 'Pooja', 'Meera', 'Tanvi',
+        'Aman', 'Rahul', 'Suresh', 'Vikas', 'Nitin', 'Pankaj', 'Gaurav', 'Harsh', 'Mohit', 'Nikhil',
+    ];
+}
+
+function demo_last_names(): array
+{
+    return [
+        'Sharma', 'Verma', 'Singh', 'Kumar', 'Yadav', 'Gupta', 'Agarwal', 'Chauhan', 'Tomar', 'Rathore',
+        'Sikarwar', 'Baghel', 'Kushwah', 'Chahar', 'Bhadauria', 'Upadhyay', 'Mishra', 'Jain', 'Saxena', 'Tiwari',
+    ];
+}
+
+function demo_class_for_position(string $position): string
+{
+    $p = strtolower($position);
+    if (str_contains($p, 'junior') || str_contains($p, 'class 5')) {
+        return 'Class ' . random_int(5, 8);
+    }
+    if (str_contains($p, 'class 6')) {
+        return 'Class 6';
+    }
+    if (str_contains($p, 'class 7')) {
+        return 'Class 7';
+    }
+    if (str_contains($p, 'class 8')) {
+        return 'Class 8';
+    }
+    if (str_contains($p, 'class 9') || str_contains($p, '9 (ch')) {
+        return random_int(0, 1) ? 'Class 9 (CHD)' : 'Class 9 (CHN)';
+    }
+    if (str_contains($p, '10 (l1)') || str_contains($p, 'class captain 10 (l1)')) {
+        return 'Class 10 (L1)';
+    }
+    if (str_contains($p, '10 (l2)') || str_contains($p, 'class captain 10 (l2)')) {
+        return 'Class 10 (L2)';
+    }
+    if (str_contains($p, 'head')) {
+        return random_int(0, 1) ? 'Class 11' : 'Class 12';
+    }
+    $senior = ['Class 9 (CHD)', 'Class 9 (CHN)', 'Class 10 (L1)', 'Class 10 (L2)', 'Class 11 (NEET)', 'Class 11 (JEE)', 'Class 11 (NDA)', 'Class 12'];
+    return $senior[array_rand($senior)];
+}
+
+/**
+ * Seed 5–10 demo candidates per active position.
+ * Returns counts: positions, candidates.
+ */
+function seed_demo_candidates(PDO $pdo, int $electionId, bool $replaceExisting = true): array
+{
+    if ($replaceExisting) {
+        $pdo->prepare('DELETE FROM votes WHERE election_id = ?')->execute([$electionId]);
+        $pdo->prepare('DELETE FROM ballots WHERE election_id = ?')->execute([$electionId]);
+        $pdo->prepare('DELETE FROM candidates WHERE election_id = ?')->execute([$electionId]);
+    }
+
+    $posStmt = $pdo->prepare(
+        'SELECT id, name FROM positions WHERE election_id = ? AND is_active = 1 ORDER BY sort_order'
+    );
+    $posStmt->execute([$electionId]);
+    $positions = $posStmt->fetchAll();
+    if ($positions === []) {
+        throw new RuntimeException('No active positions found. Add positions first.');
+    }
+
+    $insert = $pdo->prepare(
+        'INSERT INTO candidates (election_id, position_id, name, class_name, photo, is_active)
+         VALUES (?, ?, ?, ?, ?, 1)'
+    );
+
+    $first = demo_first_names();
+    $last = demo_last_names();
+    $usedNames = [];
+    $candidateCount = 0;
+
+    foreach ($positions as $pos) {
+        if (!$replaceExisting) {
+            $exists = $pdo->prepare(
+                'SELECT COUNT(*) FROM candidates WHERE election_id = ? AND position_id = ?'
+            );
+            $exists->execute([$electionId, (int) $pos['id']]);
+            if ((int) $exists->fetchColumn() > 0) {
+                continue;
+            }
+        }
+
+        $howMany = random_int(5, 10);
+        for ($i = 0; $i < $howMany; $i++) {
+            // Unique-ish full name within this seed run
+            do {
+                $full = $first[array_rand($first)] . ' ' . $last[array_rand($last)];
+            } while (isset($usedNames[$full]));
+            $usedNames[$full] = true;
+
+            $insert->execute([
+                $electionId,
+                (int) $pos['id'],
+                $full,
+                demo_class_for_position((string) $pos['name']),
+                '', // uses placeholder image
+            ]);
+            $candidateCount++;
+        }
+    }
+
+    $pdo->prepare(
+        'UPDATE elections SET status = "draft", published_at = NULL, closed_at = NULL WHERE id = ?'
+    )->execute([$electionId]);
+
+    return [
+        'positions' => count($positions),
+        'candidates' => $candidateCount,
+    ];
+}

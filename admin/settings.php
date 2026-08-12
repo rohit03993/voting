@@ -74,6 +74,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf($_POST['csrf'] ?? null)
         redirect('settings.php');
     }
 
+    // -------- Demo seed (admin only) --------
+    if ($form === 'seed' && $election) {
+        $confirm = trim((string) ($_POST['confirm_text'] ?? ''));
+        if ($confirm !== 'SEED') {
+            flash('err', 'Type SEED in capital letters to confirm.');
+            redirect('settings.php');
+        }
+        try {
+            $pdo->beginTransaction();
+            $result = seed_demo_candidates($pdo, (int) $election['id'], true);
+            $pdo->commit();
+            flash(
+                'ok',
+                "Demo data loaded: {$result['candidates']} candidates across {$result['positions']} positions. Status set to Draft. Publish when ready."
+            );
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            flash('err', 'Seed failed: ' . $e->getMessage());
+        }
+        redirect('settings.php');
+    }
+
     // -------- Normal settings --------
     $title = trim((string) ($_POST['title'] ?? ''));
     $principal = trim((string) ($_POST['principal_passcode'] ?? ''));
@@ -145,6 +169,19 @@ if ($election) {
         Regenerate Principal &amp; Director private link tokens
       </label>
       <button class="btn" type="submit">Save settings</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Demo data</h2>
+    <p class="muted">Adds <strong>5–10 students per position</strong> with placeholder photos. Replaces current candidates and clears votes. Sets election to Draft.</p>
+    <form method="post" class="stack" onsubmit="return confirm('Replace all candidates with demo data and clear votes?');">
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+      <input type="hidden" name="form" value="seed">
+      <label>Type <code>SEED</code> to confirm
+        <input name="confirm_text" placeholder="SEED" autocomplete="off" required>
+      </label>
+      <button class="btn" type="submit">Load demo candidates</button>
     </form>
   </section>
 
