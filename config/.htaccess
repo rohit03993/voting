@@ -1,0 +1,4 @@
+# Protect config and includes if someone points Apache here incorrectly
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>

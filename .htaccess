@@ -1,0 +1,7 @@
+# HCS Voting — optional pretty URLs (works even without this)
+DirectoryIndex index.php
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+</IfModule>
