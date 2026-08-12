@@ -11,16 +11,12 @@ $logoUrl = '../assets/img/logo-horizon.png';
 </header>
 
 <header class="admin-nav">
-  <div class="container admin-nav-inner">
+  <div class="container admin-bar">
     <a class="brand-logo" href="index.php" aria-label="Horizon Competition School — Voting Admin">
       <img src="<?= e($logoUrl) ?>" alt="Horizon Competition School">
-      <span class="brand-text">
-        <strong>Voting Admin</strong>
-        <small>Horizon Competition School</small>
-      </span>
     </a>
 
-    <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+    <button type="button" class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="adminMenu">
       <span></span><span></span><span></span>
     </button>
 

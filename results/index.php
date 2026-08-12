@@ -11,7 +11,7 @@ $title = $election['title'] ?? 'HCS Voting';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live Results — <?= e($title) ?></title>
-  <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css">
+  <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css?v=2">
 </head>
 <body class="vote-body">
   <?php
