@@ -3,13 +3,6 @@ declare(strict_types=1);
 $adminPage = basename($_SERVER['PHP_SELF'] ?? '');
 $logoUrl = '../assets/img/logo-horizon.png';
 ?>
-<header class="site-top">
-  <div class="container site-top-inner">
-    <p class="site-tagline">Nurturing excellence in academics &amp; character</p>
-    <p class="site-top-links">HCS Student Council Voting</p>
-  </div>
-</header>
-
 <header class="admin-nav">
   <div class="container admin-bar">
     <a class="brand-logo" href="index.php" aria-label="Horizon Competition School — Voting Admin">

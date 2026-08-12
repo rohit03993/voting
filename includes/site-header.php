@@ -5,13 +5,6 @@ $subtitle = $subtitle ?? '';
 $subtitleId = $subtitleId ?? '';
 $logoUrl = rtrim((string) $base, '/') . '/assets/img/logo-horizon.png';
 ?>
-<header class="site-top">
-  <div class="container site-top-inner">
-    <p class="site-tagline">Nurturing excellence in academics &amp; character</p>
-    <p class="site-top-links">Student Council Elections</p>
-  </div>
-</header>
-
 <header class="vote-header">
   <div class="container vote-header-inner">
     <a class="brand-logo" href="<?= e(rtrim((string) $base, '/') . '/') ?>" aria-label="Horizon Competition School">
