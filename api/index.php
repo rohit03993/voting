@@ -139,14 +139,19 @@ function api_submit_vote(PDO $pdo, array $config, array $input): void
         json_response(['ok' => false, 'error' => 'No votes submitted.'], 422);
     }
 
-    // Load active positions
+    // Only require votes for positions that have at least one active candidate
+    // (matches what the voting page shows)
     $posStmt = $pdo->prepare(
-        'SELECT id FROM positions WHERE election_id = ? AND is_active = 1'
+        'SELECT DISTINCT p.id
+         FROM positions p
+         INNER JOIN candidates c
+           ON c.position_id = p.id AND c.is_active = 1 AND c.election_id = p.election_id
+         WHERE p.election_id = ? AND p.is_active = 1'
     );
     $posStmt->execute([(int) $election['id']]);
     $requiredPositions = array_map('intval', array_column($posStmt->fetchAll(), 'id'));
     if ($requiredPositions === []) {
-        json_response(['ok' => false, 'error' => 'No positions configured.'], 422);
+        json_response(['ok' => false, 'error' => 'No positions with candidates configured.'], 422);
     }
 
     $normalized = [];

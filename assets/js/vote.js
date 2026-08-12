@@ -63,11 +63,17 @@
           '<div><strong>' + escapeHtml(c.name) + '</strong></div>' +
           '<div class="muted">' + escapeHtml(c.class || '') + '</div>';
 
-        card.addEventListener('click', () => {
+        const radio = card.querySelector('input[type="radio"]');
+        card.addEventListener('click', (ev) => {
+          // Ensure radio is selected even with custom card styling
+          if (radio) radio.checked = true;
           grid.querySelectorAll('.candidate-card').forEach((el) => el.classList.remove('selected'));
           card.classList.add('selected');
           checkSelections();
         });
+        if (radio) {
+          radio.addEventListener('change', checkSelections);
+        }
         grid.appendChild(card);
       });
 

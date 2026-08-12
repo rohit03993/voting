@@ -60,7 +60,7 @@ $base = base_url($config);
     };
   </script>
   <?php if ($status === 'live'): ?>
-  <script src="<?= e($base) ?>/assets/js/vote.js"></script>
+  <script src="<?= e($base) ?>/assets/js/vote.js?v=3"></script>
   <?php endif; ?>
 </body>
 </html>
