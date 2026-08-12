@@ -14,13 +14,12 @@ $title = $election['title'] ?? 'HCS Voting';
   <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css">
 </head>
 <body class="vote-body">
-  <header class="vote-header">
-    <div class="container">
-      <div class="brand-lockup">Horizon Competition School</div>
-      <h1>Live Results</h1>
-      <p class="muted" id="statusLine">Loading…</p>
-    </div>
-  </header>
+  <?php
+    $title = 'Live Results';
+    $subtitle = 'Loading…';
+    $subtitleId = 'statusLine';
+    include dirname(__DIR__) . '/includes/site-header.php';
+  ?>
   <main class="container">
     <section class="panel">
       <h2>Ballot totals</h2>

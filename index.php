@@ -17,13 +17,10 @@ $base = base_url($config);
   <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css">
 </head>
 <body class="vote-body">
-  <header class="vote-header">
-    <div class="container">
-      <div class="brand-lockup">Horizon Competition School</div>
-      <h1><?= e($title) ?></h1>
-      <p class="muted">Select your voter type, then choose one candidate for each position.</p>
-    </div>
-  </header>
+  <?php
+    $subtitle = 'Select your voter type, then choose one candidate for each position.';
+    include __DIR__ . '/includes/site-header.php';
+  ?>
 
   <main class="container">
     <?php if ($status !== 'live'): ?>

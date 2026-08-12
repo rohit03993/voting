@@ -21,13 +21,12 @@ $title = $election['title'] ?? 'HCS Voting';
   <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css">
 </head>
 <body class="vote-body">
-  <header class="vote-header">
-    <div class="container">
-      <div class="brand-lockup">Horizon Competition School</div>
-      <h1>Principal Voting</h1>
-      <p class="muted"><?= e($title) ?></p>
-    </div>
-  </header>
+  <?php
+    $pageTitle = $title;
+    $title = 'Principal Voting';
+    $subtitle = $pageTitle;
+    include dirname(__DIR__) . '/includes/site-header.php';
+  ?>
   <main class="container">
     <?php if (!$ok): ?>
       <div class="panel center">
