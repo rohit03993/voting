@@ -244,16 +244,45 @@ function api_get_results(PDO $pdo, array $config): void
         json_response(['ok' => true, 'winners' => [], 'results' => [], 'special_votes' => [], 'status' => 'none']);
     }
 
+    $eid = (int) $election['id'];
+
     // Which special roles have voted
     $specialStmt = $pdo->prepare(
         "SELECT DISTINCT voter_type FROM ballots
          WHERE election_id = ? AND voter_type IN ('principal','director')"
     );
-    $specialStmt->execute([(int) $election['id']]);
+    $specialStmt->execute([$eid]);
     $specialVotes = array_column($specialStmt->fetchAll(), 'voter_type');
 
     $hideCounts = in_array('principal', $specialVotes, true)
         || in_array('director', $specialVotes, true);
+
+    // Final authority: Director overrides Principal if both voted
+    $authority = null;
+    if (in_array('director', $specialVotes, true)) {
+        $authority = 'director';
+    } elseif (in_array('principal', $specialVotes, true)) {
+        $authority = 'principal';
+    }
+
+    // Official winners from Principal/Director ballot (if any)
+    $authorityWinners = []; // position_id => candidate row
+    if ($authority !== null) {
+        $aw = $pdo->prepare(
+            'SELECT p.id AS position_id, p.name AS position_name, p.sort_order,
+                    c.id AS candidate_id, c.name, c.class_name, c.photo
+             FROM votes v
+             INNER JOIN ballots b ON b.id = v.ballot_id
+             INNER JOIN positions p ON p.id = v.position_id
+             INNER JOIN candidates c ON c.id = v.candidate_id
+             WHERE v.election_id = ? AND b.voter_type = ? AND b.election_id = ?
+             ORDER BY p.sort_order ASC'
+        );
+        $aw->execute([$eid, $authority, $eid]);
+        foreach ($aw->fetchAll() as $row) {
+            $authorityWinners[(int) $row['position_id']] = $row;
+        }
+    }
 
     $stmt = $pdo->prepare(
         'SELECT p.id AS position_id, p.name AS position_name, p.sort_order,
@@ -270,14 +299,16 @@ function api_get_results(PDO $pdo, array $config): void
          GROUP BY p.id, c.id
          ORDER BY p.sort_order ASC, vote_count DESC, c.name ASC'
     );
-    $stmt->execute([(int) $election['id']]);
+    $stmt->execute([$eid]);
     $rows = $stmt->fetchAll();
 
     $results = [];
     $winners = [];
+    $voteLeaders = []; // fallback winners by count before authority override
 
     foreach ($rows as $row) {
         $pname = $row['position_name'];
+        $pid = (int) $row['position_id'];
         if (!isset($results[$pname])) {
             $results[$pname] = [];
         }
@@ -287,29 +318,74 @@ function api_get_results(PDO $pdo, array $config): void
             'class' => $row['class_name'],
             'photo' => photo_url($config, $row['photo']),
             'votes' => $hideCounts ? null : (int) $row['vote_count'],
-            'breakdown' => $hideCounts ? null : [
+            'breakdown' => null,
+            'is_winner' => false,
+        ];
+        // Never expose S/St/P/D once principal or director has voted
+        if (!$hideCounts) {
+            $entry['breakdown'] = [
                 'student' => (int) $row['student_votes'],
                 'staff' => (int) $row['staff_votes'],
                 'principal' => (int) $row['principal_votes'],
                 'director' => (int) $row['director_votes'],
-            ],
-        ];
+            ];
+        }
         $results[$pname][] = $entry;
 
-        if (!isset($winners[$pname])) {
+        if (!isset($voteLeaders[$pid])) {
+            $voteLeaders[$pid] = [
+                'position_name' => $pname,
+                'name' => $row['name'],
+                'class' => $row['class_name'],
+                'photo' => photo_url($config, $row['photo']),
+                'votes' => (int) $row['vote_count'],
+                'candidate_id' => (int) $row['candidate_id'],
+            ];
+        }
+    }
+
+    // Build winners: authority picks win; otherwise highest vote count
+    if ($authority !== null && $authorityWinners !== []) {
+        foreach ($authorityWinners as $pid => $row) {
+            $pname = $row['position_name'];
             $winners[$pname] = [
                 'name' => $row['name'],
                 'class' => $row['class_name'],
                 'photo' => photo_url($config, $row['photo']),
-                'votes' => $hideCounts ? null : (int) $row['vote_count'],
+                'votes' => null,
+                'decided_by' => $authority,
             ];
+            // Mark winner in full results list
+            if (isset($results[$pname])) {
+                foreach ($results[$pname] as &$cand) {
+                    $cand['is_winner'] = ((int) $cand['id'] === (int) $row['candidate_id']);
+                }
+                unset($cand);
+            }
+        }
+    } else {
+        foreach ($voteLeaders as $lead) {
+            $pname = $lead['position_name'];
+            $winners[$pname] = [
+                'name' => $lead['name'],
+                'class' => $lead['class'],
+                'photo' => $lead['photo'],
+                'votes' => $hideCounts ? null : $lead['votes'],
+                'decided_by' => 'votes',
+            ];
+            if (isset($results[$pname])) {
+                foreach ($results[$pname] as &$cand) {
+                    $cand['is_winner'] = ((int) $cand['id'] === (int) $lead['candidate_id']);
+                }
+                unset($cand);
+            }
         }
     }
 
     $totalsStmt = $pdo->prepare(
         'SELECT voter_type, COUNT(*) AS total FROM ballots WHERE election_id = ? GROUP BY voter_type'
     );
-    $totalsStmt->execute([(int) $election['id']]);
+    $totalsStmt->execute([$eid]);
     $totals = [];
     foreach ($totalsStmt->fetchAll() as $t) {
         $totals[$t['voter_type']] = (int) $t['total'];
@@ -321,7 +397,8 @@ function api_get_results(PDO $pdo, array $config): void
         'title' => $election['title'],
         'hide_counts' => $hideCounts,
         'special_votes' => $specialVotes,
-        'ballot_totals' => $totals,
+        'decided_by' => $authority, // principal | director | null
+        'ballot_totals' => $hideCounts ? new stdClass() : $totals,
         'winners' => $winners,
         'results' => $results,
     ]);

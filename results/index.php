@@ -11,7 +11,7 @@ $title = $election['title'] ?? 'HCS Voting';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live Results — <?= e($title) ?></title>
-  <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css?v=2">
+  <link rel="stylesheet" href="<?= e($base) ?>/assets/css/app.css?v=5">
 </head>
 <body class="vote-body">
   <?php
@@ -37,6 +37,6 @@ $title = $election['title'] ?? 'HCS Voting';
   <script>
     window.HCS_RESULTS = { api: <?= json_encode($base . '/api/') ?> };
   </script>
-  <script src="<?= e($base) ?>/assets/js/results.js"></script>
+  <script src="<?= e($base) ?>/assets/js/results.js?v=5"></script>
 </body>
 </html>
