@@ -283,6 +283,18 @@
         stepVote.hidden = true;
         stepReview.hidden = true;
         setMsg('Thank you! Your vote was recorded.', 'ready');
+
+        // Public kiosk: reset so the next student/staff can vote on this same device.
+        if (!cfg.requirePasscode) {
+          setTimeout(function () {
+            confirmation.hidden = true;
+            if (voterTypeEl) voterTypeEl.value = '';
+            submitBtn.disabled = false;
+            showMode('start');
+            syncStartBtn();
+            setMsg('Vote recorded. Next voter can start.', 'ok');
+          }, 2500);
+        }
       })
       .catch((err) => {
         spinner.hidden = true;

@@ -110,13 +110,9 @@ function current_election(PDO $pdo): ?array
     return $row ?: null;
 }
 
-function ensure_voter_cookie(): string
+function set_voter_cookie(string $token): void
 {
     $name = 'hcs_voter';
-    if (!empty($_COOKIE[$name]) && preg_match('/^[a-f0-9]{32,64}$/', $_COOKIE[$name])) {
-        return $_COOKIE[$name];
-    }
-    $token = random_token(16);
     setcookie($name, $token, [
         'expires' => time() + 60 * 60 * 24 * 30,
         'path' => '/',
@@ -125,6 +121,23 @@ function ensure_voter_cookie(): string
         'samesite' => 'Lax',
     ]);
     $_COOKIE[$name] = $token;
+}
+
+function ensure_voter_cookie(): string
+{
+    $name = 'hcs_voter';
+    if (!empty($_COOKIE[$name]) && preg_match('/^[a-f0-9]{32,64}$/', $_COOKIE[$name])) {
+        return $_COOKIE[$name];
+    }
+    $token = random_token(16);
+    set_voter_cookie($token);
+    return $token;
+}
+
+function fresh_voter_cookie(): string
+{
+    $token = random_token(16);
+    set_voter_cookie($token);
     return $token;
 }
 

@@ -88,7 +88,7 @@ $base = base_url($config);
     };
   </script>
   <?php if ($status === 'live'): ?>
-  <script src="<?= e($base) ?>/assets/js/vote.js?v=4"></script>
+  <script src="<?= e($base) ?>/assets/js/vote.js?v=5"></script>
   <?php endif; ?>
 </body>
 </html>

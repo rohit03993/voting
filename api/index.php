@@ -182,19 +182,19 @@ function api_submit_vote(PDO $pdo, array $config, array $input): void
         }
     }
 
-    $voterToken = ensure_voter_cookie();
-    // For principal/director, force unique token per role so they can only vote once
+    // Student/staff share one computer: each ballot gets a new token so the next voter is not blocked.
+    // Principal/director remain one vote per election.
     if ($voterType === 'principal' || $voterType === 'director') {
         $voterToken = $voterType . '_once';
-    }
-
-    // Already voted?
-    $exists = $pdo->prepare(
-        'SELECT id FROM ballots WHERE election_id = ? AND voter_type = ? AND voter_token = ? LIMIT 1'
-    );
-    $exists->execute([(int) $election['id'], $voterType, $voterToken]);
-    if ($exists->fetch()) {
-        json_response(['ok' => false, 'error' => 'You have already voted in this election.'], 409);
+        $exists = $pdo->prepare(
+            'SELECT id FROM ballots WHERE election_id = ? AND voter_type = ? AND voter_token = ? LIMIT 1'
+        );
+        $exists->execute([(int) $election['id'], $voterType, $voterToken]);
+        if ($exists->fetch()) {
+            json_response(['ok' => false, 'error' => 'You have already voted in this election.'], 409);
+        }
+    } else {
+        $voterToken = fresh_voter_cookie();
     }
 
     $pdo->beginTransaction();
