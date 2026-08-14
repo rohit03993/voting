@@ -41,18 +41,18 @@ $base = base_url($config);
           </div>
         </div>
 
-        <div id="instructionMsg" class="alert warn">Select Student or Staff to start.</div>
+        <div id="instructionMsg" class="alert warn">Student is selected. Tap Start voting, or change to Staff.</div>
 
         <section id="stepStart" class="panel wizard-step">
           <label class="stack">
             <span>I am a</span>
             <select id="voterType" required>
               <option value="">— Select Voter Type —</option>
-              <option value="student">Student</option>
+              <option value="student" selected>Student</option>
               <option value="staff">Staff / Teacher</option>
             </select>
           </label>
-          <button type="button" class="btn" id="startBtn" disabled>Start voting</button>
+          <button type="button" class="btn" id="startBtn">Start voting</button>
         </section>
 
         <section id="stepVote" class="panel wizard-step" hidden>
@@ -88,7 +88,7 @@ $base = base_url($config);
     };
   </script>
   <?php if ($status === 'live'): ?>
-  <script src="<?= e($base) ?>/assets/js/vote.js?v=5"></script>
+  <script src="<?= e($base) ?>/assets/js/vote.js?v=6"></script>
   <?php endif; ?>
 </body>
 </html>

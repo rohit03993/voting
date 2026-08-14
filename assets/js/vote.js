@@ -283,17 +283,11 @@
         stepVote.hidden = true;
         stepReview.hidden = true;
         setMsg('Thank you! Your vote was recorded.', 'ready');
+        notifyResultsRefresh();
 
-        // Public kiosk: reset so the next student/staff can vote on this same device.
+        // Public kiosk: start the next ballot with Student selected.
         if (!cfg.requirePasscode) {
-          setTimeout(function () {
-            confirmation.hidden = true;
-            if (voterTypeEl) voterTypeEl.value = '';
-            submitBtn.disabled = false;
-            showMode('start');
-            syncStartBtn();
-            setMsg('Vote recorded. Next voter can start.', 'ok');
-          }, 2500);
+          setTimeout(resetForNextStudent, 1500);
         }
       })
       .catch((err) => {
@@ -311,7 +305,34 @@
       });
   });
 
-  setMsg(cfg.requirePasscode ? 'Enter passcode to start.' : 'Select Student or Staff to start.', 'warn');
+  function notifyResultsRefresh() {
+    try {
+      localStorage.setItem('hcs_vote_ping', String(Date.now()));
+      if (window.BroadcastChannel) {
+        new BroadcastChannel('hcs_vote').postMessage({ type: 'vote_submitted' });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function resetForNextStudent() {
+    confirmation.hidden = true;
+    selections = {};
+    stepIndex = 0;
+    if (voterTypeEl) voterTypeEl.value = 'student';
+    submitBtn.disabled = false;
+    syncStartBtn();
+    if (!positions.length) {
+      showMode('start');
+      setMsg('Vote recorded. Next student can start.', 'ok');
+      return;
+    }
+    showMode('vote');
+    renderStep();
+    setMsg('Next student: choose one candidate for this position.', 'ready');
+  }
+
+  setMsg(cfg.requirePasscode ? 'Enter passcode to start.' : 'Student is selected. Tap Start voting, or change to Staff.', 'warn');
+  if (voterTypeEl && !voterTypeEl.value) voterTypeEl.value = 'student';
   syncStartBtn();
   updateProgress();
 

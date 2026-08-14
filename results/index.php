@@ -37,6 +37,6 @@ $title = $election['title'] ?? 'HCS Voting';
   <script>
     window.HCS_RESULTS = { api: <?= json_encode($base . '/api/') ?> };
   </script>
-  <script src="<?= e($base) ?>/assets/js/results.js?v=5"></script>
+  <script src="<?= e($base) ?>/assets/js/results.js?v=6"></script>
 </body>
 </html>

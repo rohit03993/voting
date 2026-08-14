@@ -106,5 +106,15 @@
   }
 
   load();
-  setInterval(load, 4000);
+  setInterval(load, 30000);
+
+  try {
+    if (window.BroadcastChannel) {
+      const ch = new BroadcastChannel('hcs_vote');
+      ch.onmessage = function () { load(); };
+    }
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'hcs_vote_ping') load();
+    });
+  } catch (e) { /* ignore */ }
 })();

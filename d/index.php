@@ -86,7 +86,7 @@ $title = $election['title'] ?? 'HCS Voting';
       requirePasscode: true
     };
   </script>
-  <script src="<?= e($base) ?>/assets/js/vote.js?v=5"></script>
+  <script src="<?= e($base) ?>/assets/js/vote.js?v=6"></script>
   <?php endif; ?>
 </body>
 </html>
